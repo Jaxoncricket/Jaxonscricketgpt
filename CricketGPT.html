@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CricketGPT — Your Cricket AI</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#0b1020;color:#f4f7fb;height:100vh;overflow:hidden}
+.app{display:flex;height:100vh}
+.sidebar{width:260px;background:#080d18;border-right:1px solid #20283a;padding:18px;display:flex;flex-direction:column}
+.logo{font-size:22px;font-weight:800;margin-bottom:20px;display:flex;gap:10px;align-items:center}
+.ball{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#24c46a,#0a8f49);display:grid;place-items:center}
+.new{border:1px solid #303a50;background:#111827;color:white;border-radius:10px;padding:12px;text-align:left;cursor:pointer;font-size:14px}
+.new:hover{background:#182235}
+.sideTitle{font-size:12px;color:#7f8ba3;margin:25px 5px 8px;text-transform:uppercase;letter-spacing:1px}
+.history{font-size:14px;color:#c5ccda;padding:10px 8px;border-radius:8px}
+.bottom{margin-top:auto;color:#8e99ad;font-size:12px;line-height:1.5}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.top{height:64px;border-bottom:1px solid #20283a;display:flex;align-items:center;padding:0 24px;font-weight:700}
+.badge{margin-left:10px;background:#123d2a;color:#55e58e;padding:4px 8px;border-radius:999px;font-size:11px}
+.chat{flex:1;overflow:auto;padding:34px 20px 140px}
+.welcome{max-width:850px;margin:8vh auto 0;text-align:center}
+.welcome h1{font-size:38px;margin:0 0 10px}
+.welcome p{color:#9ca8bb;margin:0 0 28px}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;text-align:left}
+.card{background:#111827;border:1px solid #273149;border-radius:12px;padding:16px;cursor:pointer}
+.card:hover{background:#172033}
+.card b{display:block;margin-bottom:6px}
+.card span{font-size:13px;color:#929eb2}
+.message{max-width:850px;margin:0 auto 24px;display:flex;gap:13px;line-height:1.55}
+.avatar{width:34px;height:34px;flex:0 0 34px;border-radius:9px;display:grid;place-items:center;background:#193e2b;font-size:18px}
+.user .avatar{background:#263148}
+.bubble{white-space:pre-wrap;flex:1}
+.user .bubble{background:#172033;border:1px solid #263149;padding:12px 15px;border-radius:12px}
+.composerWrap{position:absolute;bottom:0;left:260px;right:0;padding:18px 20px 24px;background:linear-gradient(transparent,#0b1020 28%)}
+.composer{max-width:850px;margin:auto;display:flex;background:#121a2a;border:1px solid #35405a;border-radius:15px;padding:8px}
+input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px;padding:10px}
+.send{width:42px;height:42px;border:0;border-radius:10px;background:#19a95a;color:white;font-size:19px;cursor:pointer}
+.send:hover{background:#20bf69}
+.note{text-align:center;color:#68758b;font-size:11px;margin-top:8px}
+@media(max-width:700px){.sidebar{display:none}.composerWrap{left:0}.welcome h1{font-size:30px}.cards{grid-template-columns:1fr}.chat{padding-left:14px;padding-right:14px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><div class="ball">🏏</div> CricketGPT</div>
+    <button class="new" onclick="newChat()">＋ New cricket chat</button>
+    <div class="sideTitle">Recent</div>
+    <div id="history"></div>
+    <div class="bottom">Free cricket assistant<br>Ask about players, teams, rules, stats and more.</div>
+  </aside>
+
+  <main class="main">
+    <div class="top">CricketGPT <span class="badge">FREE</span></div>
+    <div class="chat" id="chat">
+      <div class="welcome" id="welcome">
+        <h1>What do you want to know about cricket?</h1>
+        <p>Your cricket assistant for questions, comparisons, rules and predictions.</p>
+        <div class="cards">
+          <div class="card" onclick="ask('Who is the best batsman in cricket right now?')"><b>🏏 Best batsmen</b><span>Compare today's top players</span></div>
+          <div class="card" onclick="ask('Explain cricket to me like I am new to it')"><b>📚 Learn cricket</b><span>Rules explained simply</span></div>
+          <div class="card" onclick="ask('Compare Australia and India in Test cricket')"><b>🇦🇺 vs 🇮🇳 Compare teams</b><span>Strengths, history and players</span></div>
+          <div class="card" onclick="ask('Give me a cricket match prediction')"><b>🔮 Match prediction</b><span>Make a reasoned prediction</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="composerWrap">
+  <form class="composer" onsubmit="send(event)">
+    <input id="input" autocomplete="off" placeholder="Ask CricketGPT anything about cricket...">
+    <button class="send" type="submit">↑</button>
+  </form>
+  <div class="note">CricketGPT can make mistakes. Check official scorecards for live results.</div>
+</div>
+
+<script>
+const chat=document.getElementById('chat'), input=document.getElementById('input'), welcome=document.getElementById('welcome');
+const history=document.getElementById('history');
+
+function addMessage(text, user=false){
+  if(welcome) welcome.style.display='none';
+  const m=document.createElement('div'); m.className='message '+(user?'user':'bot');
+  m.innerHTML='<div class="avatar">'+(user?'👤':'🏏')+'</div><div class="bubble"></div>';
+  m.querySelector('.bubble').textContent=text;
+  chat.appendChild(m); chat.scrollTop=chat.scrollHeight;
+}
+function answer(q){
+  const x=q.toLowerCase();
+  if(x.includes('rule')||x.includes('explain cricket'))
+    return "Cricket is played between two teams of 11. One team bats while the other bowls and fields. The batting team scores runs by running between the wickets or hitting boundaries: 4 runs if the ball reaches the boundary after bouncing, and 6 if it clears the boundary without bouncing. In most formats, each team gets a set number of overs or innings.";
+  if(x.includes('best bats')||x.includes('best batter'))
+    return "There isn't one objective answer — it depends on format. A good comparison looks at recent form, average, strike rate, opposition, conditions and consistency. For a serious ranking, I'd compare Test, ODI and T20 numbers separately rather than mixing them.";
+  if(x.includes('australia')&&x.includes('india'))
+    return "Australia and India are both elite cricket nations. Australia have traditionally been especially strong in Test cricket and pace bowling, while India have enormous batting depth and a huge strength in spin and home conditions. The matchup can change dramatically depending on the format and venue.";
+  if(x.includes('predict')||x.includes('prediction'))
+    return "I can give you a prediction, but a good one should use the actual teams, venue, recent form, confirmed line-ups and conditions. Send me the two teams and the format (Test, ODI or T20), and I'll give you a winner and predicted score.";
+  if(x.includes('score')||x.includes('live'))
+    return "This version is running without a live cricket-data connection, so I won't invent a score. For live matches, connect a cricket data API to this site and the chat can return current scores and wickets.";
+  return "I'm your CricketGPT! I can help with cricket rules, players, teams, statistics, comparisons, history, tactics and match predictions. For live scores and the latest results, this free demo needs a live cricket-data connection.";
+}
+function ask(q){input.value=q; send(new Event('submit'))}
+function send(e){
+  e.preventDefault(); const q=input.value.trim(); if(!q)return;
+  addMessage(q,true); input.value='';
+  const thinking=document.createElement('div'); thinking.className='message bot'; thinking.id='thinking';
+  thinking.innerHTML='<div class="avatar">🏏</div><div class="bubble">Thinking…</div>'; chat.appendChild(thinking); chat.scrollTop=chat.scrollHeight;
+  setTimeout(()=>{thinking.remove(); addMessage(answer(q)); addHistory(q)},450);
+}
+function addHistory(q){
+  const d=document.createElement('div'); d.className='history'; d.textContent=q.length>30?q.slice(0,30)+'…':q;
+  history.prepend(d); if(history.children.length>6)history.lastChild.remove();
+}
+function newChat(){chat.innerHTML=''; chat.appendChild(welcome); welcome.style.display='block'; history.innerHTML='';}
+</script>
+</body>
+</html>
